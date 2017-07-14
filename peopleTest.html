@@ -6,10 +6,7 @@
 <body>
 <canvas id="canvas" width="500" height="300" style="border: 1px solid black;"></canvas>
 <script type="text/javascript">
-function randomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
+// Helper: colors
 var currentColor = 0;
 var maxColor = 32;
 var frequency = .3;
@@ -25,76 +22,103 @@ function nextColor() {
 	return color;
 }
 
-var canvas = document.getElementById('canvas');
-var ctx = canvas.getContext('2d');
-
-function dist(person1, person2) {
-	return Math.sqrt((person2.x-person1.x)**2 + (person2.y-person1.y)**2);
+// Helper: probability
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-var people = [];
-var radius = 10;
-var maxSpeed = 4;
+function randomFloat(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+// Helper: people
+function eu_dist(x1, y1, x2, y2) {
+	return Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+}
+
+function dist(person1, person2) {
+	return eu_dist(person1.x, person1.y, person2.x, person2.y);
+}
 
 function nearestPerson(person) {
 	var nearest = 100000;
 	for (i in people) {
 		var currentDistance = dist(person, people[i]);
-		if(currentDistance < nearest) {
+		if(currentDistance < nearest && currentDistance != 0) {
 			nearest = currentDistance;
 		}
 	}
 	return nearest;
 }
 
-for(var i = 0; i < 10; i++) {
-	var person = {
-	  x: randomInt(0, 500),
-	  y: randomInt(0, 300),
-	  radius: radius,
-	  directionX: 0,
-	  directionY: 0,
-	  color: nextColor(),
-	  draw: function() {
-	    ctx.beginPath();
-	    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
-	    ctx.closePath();
-	    ctx.fillStyle = this.color;
-	    ctx.fill();
-	  },
-	  walk: function() {
-		this.directionX += randomInt(-1, 1);
-		this.directionY += randomInt(-1, 1);
-		this.x += this.directionX;
-		this.y += this.directionY;
-		if(this.x - this.radius < 0) {
-			this.x = this.radius;
-		} else if(this.x + this.radius > canvas.width) {
-			this.x = canvas.width - this.radius;
-		}
-		if(this.y - this.radius < 0) {
-			this.y = this.radius;
-		} else if(this.y + this.radius > canvas.height) {
-			this.y = canvas.height - this.radius;
-		}
-	  }
-	};
-
-	while(nearestPerson(person) < radius*2) {
-		person.x = randomInt(0, 500);
-		person.y = randomInt(0, 300);
-	}
-
-	people.push(person);
+function isOutOfBounds(person) {
+	return (person.x - person.radius < 0 ||
+			person.x + person.radius > canvas.width ||
+			person.y - person.radius < 0 ||
+			person.y + person.radius > canvas.height)
 }
+
+function setupPeople() {
+	for(var i = 0; i < 10; i++) {
+		var person = {
+		  x: randomInt(0, 500),
+		  y: randomInt(0, 300),
+		  radius: radius,
+		  color: nextColor(),
+		  directionX: 0,
+		  directionY: 0,
+		  draw: function() {
+		    ctx.beginPath();
+		    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+		    ctx.closePath();
+		    ctx.fillStyle = this.color;
+		    ctx.fill();
+		  },
+		  walk: function() {
+		  	// determine an arbitrary direction
+			this.directionX += randomInt(-1, 1);
+			this.directionY += randomInt(-1, 1);
+
+			this.x += this.directionX;
+			this.y += this.directionY;
+
+			if(nearestPerson(this) < this.radius*2 || isOutOfBounds(this)) {
+				this.x -= this.directionX;
+				this.y -= this.directionY;
+				this.directionX = 0;
+				this.directionY = 0;
+			}
+		  }
+		};
+
+		while(nearestPerson(person) < radius*2) {
+			person.x = randomInt(0, 500);
+			person.y = randomInt(0, 300);
+		}
+
+		people.push(person);
+	}
+}
+
+// Config
+var radius = 10;
+var maxSpeed = 4;
+
+// Main
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+var people = [];
 
 function draw() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	for (i in people) {
+	for (var i in people) {
 		people[i].walk();
 		people[i].draw();
+		console.log(i)
 	}
 }
+
+setupPeople();
 setInterval(draw, 60);
 </script>
 </body>
