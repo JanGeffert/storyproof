@@ -34,6 +34,7 @@ function dist(person1, person2) {
 
 var people = [];
 var radius = 10;
+var maxSpeed = 4;
 
 function nearestPerson(person) {
 	var nearest = 100000;
@@ -66,15 +67,15 @@ for(var i = 0; i < 10; i++) {
 		this.directionY += randomInt(-1, 1);
 		this.x += this.directionX;
 		this.y += this.directionY;
-		if(this.x < 0) {
-			this.x = 0;
-		} else if(this.x > canvas.width) {
-			this.x = canvas.width;
+		if(this.x - this.radius < 0) {
+			this.x = this.radius;
+		} else if(this.x + this.radius > canvas.width) {
+			this.x = canvas.width - this.radius;
 		}
-		if(this.y < 0) {
-			this.y = 0;
-		} else if(this.y > canvas.width) {
-			this.y = canvas.width;
+		if(this.y - this.radius < 0) {
+			this.y = this.radius;
+		} else if(this.y + this.radius > canvas.height) {
+			this.y = canvas.height - this.radius;
 		}
 	  }
 	};
@@ -94,7 +95,7 @@ function draw() {
 		people[i].draw();
 	}
 }
-setInterval(draw, 100);
+setInterval(draw, 60);
 </script>
 </body>
 </html>
