@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Story Proofs</title>
+</head>
+<body>
+<canvas id="canvas" width="500" height="300" style="border: 1px solid black;"></canvas>
+<script type="text/javascript">
+function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+var currentColor = 0;
+var maxColor = 32;
+var frequency = .3;
+function nextColor() {
+	currentColor = (currentColor + 1) % maxColor;
+
+	var red = Math.sin(frequency*currentColor + 0) * 127 + 128;
+	var green = Math.sin(frequency*currentColor + 2) * 127 + 128;
+	var blue  = Math.sin(frequency*currentColor + 4) * 127 + 128;
+
+	var color = "rgb(" + Math.floor(red) + ", " +  Math.floor(green) + ", " +  Math.floor(blue) + ")"
+
+	return color;
+}
+
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+
+function dist(person1, person2) {
+	return Math.sqrt((person2.x-person1.x)**2 + (person2.y-person1.y)**2);
+}
+
+var people = [];
+var radius = 10;
+
+function nearestPerson(person) {
+	var nearest = 100000;
+	for (i in people) {
+		var currentDistance = dist(person, people[i]);
+		if(currentDistance < nearest) {
+			nearest = currentDistance;
+		}
+	}
+	return nearest;
+}
+
+for(var i = 0; i < 10; i++) {
+	var person = {
+	  x: randomInt(0, 500),
+	  y: randomInt(0, 300),
+	  radius: radius,
+	  directionX: 0,
+	  directionY: 0,
+	  color: nextColor(),
+	  draw: function() {
+	    ctx.beginPath();
+	    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+	    ctx.closePath();
+	    ctx.fillStyle = this.color;
+	    ctx.fill();
+	  },
+	  walk: function() {
+		this.directionX += randomInt(-1, 1);
+		this.directionY += randomInt(-1, 1);
+		this.x += this.directionX;
+		this.y += this.directionY;
+		if(this.x < 0) {
+			this.x = 0;
+		} else if(this.x > canvas.width) {
+			this.x = canvas.width;
+		}
+		if(this.y < 0) {
+			this.y = 0;
+		} else if(this.y > canvas.width) {
+			this.y = canvas.width;
+		}
+	  }
+	};
+
+	while(nearestPerson(person) < radius*2) {
+		person.x = randomInt(0, 500);
+		person.y = randomInt(0, 300);
+	}
+
+	people.push(person);
+}
+
+function draw() {
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	for (i in people) {
+		people[i].walk();
+		people[i].draw();
+	}
+}
+setInterval(draw, 100);
+</script>
+</body>
+</html>
