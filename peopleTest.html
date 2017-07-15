@@ -58,6 +58,13 @@ function isOutOfBounds(person) {
 			person.y + person.radius > canvas.height)
 }
 
+function wallDistance(person) {
+	return Math.min(eu_dist(person.x, person.y, person.x, 0),
+					eu_dist(person.x, person.y, 0, person.y),
+					eu_dist(person.x, person.y, person.x, canvas.height),
+					eu_dist(person.x, person.y, canvas.width, person.y));
+}
+
 function setupPeople() {
 	for(var i = 0; i < 10; i++) {
 		var person = {
@@ -85,15 +92,15 @@ function setupPeople() {
 			if(nearestPerson(this) < this.radius*2 || isOutOfBounds(this)) {
 				this.x -= this.directionX;
 				this.y -= this.directionY;
-				this.directionX = 0;
-				this.directionY = 0;
+				this.directionX *= -0.5;
+				this.directionY *= -0.5;
 			}
 		  }
 		};
 
 		while(nearestPerson(person) < radius*2) {
-			person.x = randomInt(0, 500);
-			person.y = randomInt(0, 300);
+			person.x = randomInt(0 + radius, 500 - radius);
+			person.y = randomInt(0 + radius, 300 - radius);
 		}
 
 		people.push(person);
