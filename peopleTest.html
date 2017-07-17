@@ -66,7 +66,7 @@ function wallDistance(person) {
 }
 
 function setupPeople() {
-	for(var i = 0; i < 10; i++) {
+	for(var i = 0; i < 1; i++) {
 		var person = {
 		  x: randomInt(0, 500),
 		  y: randomInt(0, 300),
@@ -74,6 +74,8 @@ function setupPeople() {
 		  color: nextColor(),
 		  directionX: 0,
 		  directionY: 0,
+		  goalX: 250,
+		  goalY: 150,
 		  draw: function() {
 		    ctx.beginPath();
 		    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
@@ -82,26 +84,32 @@ function setupPeople() {
 		    ctx.fill();
 		  },
 		  walk: function() {
+		  	console.log(wallDistance(this));
+
 		  	// determine an arbitrary direction
-			this.directionX += randomInt(-1, 1);
-			this.directionY += randomInt(-1, 1);
+			this.directionX = this.goalX - this.x;
+			this.directionY = this.goalY - this.y;
+
+			this.directionX /= this.directionX;
+			this.directionY /= this.directionY;
 
 			this.x += this.directionX;
 			this.y += this.directionY;
 
-			if(nearestPerson(this) < this.radius*2 || isOutOfBounds(this)) {
+			if(nearestPerson(this) < this.radius*2) {
 				this.x -= this.directionX;
 				this.y -= this.directionY;
 				this.directionX *= -0.5;
 				this.directionY *= -0.5;
 			}
+
 		  }
 		};
 
-		while(nearestPerson(person) < radius*2) {
-			person.x = randomInt(0 + radius, 500 - radius);
-			person.y = randomInt(0 + radius, 300 - radius);
-		}
+		// while(nearestPerson(person) < radius*2) {
+		// 	person.x = randomInt(0 + radius, 500 - radius);
+		// 	person.y = randomInt(0 + radius, 300 - radius);
+		// }
 
 		people.push(person);
 	}

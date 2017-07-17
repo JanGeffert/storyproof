@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Path finding</title>
+</head>
+<body>
+<canvas id="canvas" width="640" height="640" style="border: 1px solid black;"></canvas>
+<script type="text/javascript">
+// Config
+var width = 16;
+var height = 16;
+var pixel_size = 40;
+
+// Main
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+
+function drawBoard() {
+	for (var x = 0; x < width; x++) {
+		ctx.beginPath();
+		ctx.moveTo(x * pixel_size, 0);
+		ctx.lineTo(x * pixel_size, height * pixel_size);
+		ctx.stroke();
+	}
+
+	for (var y = 0; y < height; y++) {
+		ctx.beginPath();
+		ctx.moveTo(0, y * pixel_size);
+		ctx.lineTo(height * pixel_size, y * pixel_size);
+		ctx.stroke();
+	}
+}
+
+drawBoard()
+</script>
+</body>
+</html>
