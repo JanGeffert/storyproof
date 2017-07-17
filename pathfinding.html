@@ -6,32 +6,92 @@
 <body>
 <canvas id="canvas" width="640" height="640" style="border: 1px solid black;"></canvas>
 <script type="text/javascript">
+// mathematical helpers
+function Vec(x,y) {
+	this.x = x;
+	this.y = y;
+	this.add = function(v) {
+		this.x += v.x;
+		this.y += v.y;
+	};
+}
+
 // Config
-var width = 16;
-var height = 16;
-var pixel_size = 40;
+var dimension = new Vec(16, 16);
+var pixelSize = 40;
+
+var playerPos = new Vec(0, 0);
+var goal = new Vec(6, 8);
+var obstacles = [];
+obstacles.push(new Vec(4,4));
+obstacles.push(new Vec(4,5));
+obstacles.push(new Vec(4,6));
+obstacles.push(new Vec(4,7));
+
+// player methods
+function isWithinBounds(v) {
+	return v.x >= 0 && v.x < dimension.x && v.y >= 0 && v.y < dimension.y;
+}
+
+function movePlayer(v) {
+	var potentialPos = new Vec(playerPos.x + v.x, playerPos.y + v.y);
+	if(isWithinBounds(potentialPos)) {
+		playerPos.add(v);
+	} else {
+		console.log("Tried to move player out of bounds.")
+	}
+}
 
 // Main
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
 
 function drawBoard() {
-	for (var x = 0; x < width; x++) {
+	for (var x = 0; x < dimension.x; x++) {
 		ctx.beginPath();
-		ctx.moveTo(x * pixel_size, 0);
-		ctx.lineTo(x * pixel_size, height * pixel_size);
+		ctx.moveTo(x * pixelSize, 0);
+		ctx.lineTo(x * pixelSize, dimension.y * pixelSize);
 		ctx.stroke();
 	}
 
-	for (var y = 0; y < height; y++) {
+	for (var y = 0; y < dimension.y; y++) {
 		ctx.beginPath();
-		ctx.moveTo(0, y * pixel_size);
-		ctx.lineTo(height * pixel_size, y * pixel_size);
+		ctx.moveTo(0, y * pixelSize);
+		ctx.lineTo(dimension.x * pixelSize, y * pixelSize);
 		ctx.stroke();
 	}
 }
 
-drawBoard()
+function drawElement(pos, color) {
+	ctx.fillStyle = color;
+	ctx.fillRect(pos.x * pixelSize, pos.y * pixelSize, pixelSize, pixelSize);
+}
+
+function drawPlayer() {
+	drawElement(playerPos, "red");
+}
+
+function drawObstacles() {
+	for (i in obstacles) {
+		drawElement(obstacles[i], "blue");
+	}
+}
+
+function drawGoal() {
+	drawElement(goal, "green");
+}
+
+function draw() {
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	drawBoard();
+	drawPlayer();
+	drawObstacles();
+	drawGoal();
+}
+
+draw();
+movePlayer(new Vec(1,1));
+draw();
 </script>
 </body>
 </html>
