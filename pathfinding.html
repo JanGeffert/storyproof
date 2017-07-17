@@ -1,3 +1,5 @@
+https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -89,9 +91,89 @@ function draw() {
 	drawGoal();
 }
 
+function update() {
+	draw();
+	movePlayer(new Vec(1, 0));
+}
+
+function makeArray(w, h, val) {
+    var arr = [];
+    for(i = 0; i < h; i++) {
+        arr[i] = [];
+        for(j = 0; j < w; j++) {
+            arr[i][j] = val;
+        }
+    }
+    return arr;
+}
+
+function minQueue() {
+	this.data = [];
+	this.enqueue = function(v, score) {
+		this.data.push({"pos": v, "score": score});
+		console.log("enqueue: (" + v.x + ", " + v.y + ") with score " + score);
+	}
+	this.dequeue = function() {
+		if (this.data.length == 0) {
+			console.log("dequeue called on empty queue");
+		} else {
+			var lowestScore = Infinity;
+			var lowestKey = 0;
+			for (var i in this.data) {
+				if(this.data[i].score < lowestScore) {
+					lowestScore = this.data.score;
+					lowestKey = i;
+				}
+			}
+			return this.data[lowestKey].pos
+		}
+	}
+	this.hasMember = function(v) {
+		for i in this.data {
+			if(this.data[i].pos.x == v.x && this.data[i].pos.y == v.y) {
+				return true;
+			}
+		}
+		return false;
+	}
+}
+
+function heuristicCostEstimate(start, goal) {
+	return 42;
+}
+
+function findShortestPath(start, goal) {
+	var closedSet = minQueue();
+	var openSet = minQueue();
+	openSet.enqueue(start, heuristicCostEstimate(start, goal));
+	var cameFrom = makeArray(dimension.x, dimension.y, nil);
+	var gScore = makeArray(dimension.x, dimension.y, Infinity);
+	gScore[start.x][start.y] = 0;
+	var fScore = makeArray(dimension.x, dimension.y, Infinity);
+	fScore[start.x][start.y] = heuristicCostEstimate(start, goal);
+
+	while (openSet.length > 0) {
+		var current = openSet.dequeue();
+		if (current == goal) {
+			console.log("Path found, now need to reconstruct.");
+		}
+		closedSet.enqueue(current);
+
+		var neighbors = findNeighbors(current);
+		for i in neighbors {
+			if closedSet.hasMember(neighbors[i]) {
+				continue;
+			}
+			if !openSet.hasMember(neighbors[i]) {
+				openSet.enqueue
+			}
+		}
+	}
+}
+
 draw();
-movePlayer(new Vec(1,1));
-draw();
+
+setInterval(update, 1000);
 </script>
 </body>
 </html>
