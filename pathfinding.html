@@ -23,12 +23,18 @@ var dimension = new Vec(16, 16);
 var pixelSize = 40;
 
 var playerPos = new Vec(0, 0);
-var goal = new Vec(6, 8);
+var goal = new Vec(13, 15);
 var obstacles = [];
 obstacles.push(new Vec(4,4));
+obstacles.push(new Vec(5,4));
+obstacles.push(new Vec(6,4));
 obstacles.push(new Vec(4,5));
 obstacles.push(new Vec(4,6));
 obstacles.push(new Vec(4,7));
+obstacles.push(new Vec(4,8));
+obstacles.push(new Vec(4,9));
+obstacles.push(new Vec(4,10));
+obstacles.push(new Vec(5,11));
 
 // player methods
 function isWithinBounds(v) {
@@ -73,6 +79,15 @@ function drawPlayer() {
 	drawElement(playerPos, "red");
 }
 
+function isObstacle(v) {
+	for (i in obstacles) {
+		if(v.x == obstacles[i].x && v.y == obstacles[i].y) {
+			return true;
+		}
+	}
+	return false;
+}
+
 function drawObstacles() {
 	for (i in obstacles) {
 		drawElement(obstacles[i], "blue");
@@ -97,16 +112,17 @@ function drawPath() {
 	}	
 }
 
+var path;
+
 function draw() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	path = findShortestPath(playerPos, goal);
 	drawBoard();
 	drawObstacles();
 	drawGoal();
-	drawPath();
 	drawPlayer();
+	drawPath();
 }
-
-var path = findShortestPath(playerPos, goal);
 
 function update() {
 	draw();
@@ -114,7 +130,7 @@ function update() {
 	if (nextMove != null) {
 		movePlayer(nextMove);
 	} else {
-		console.log("reached goal!");
+		// console.log("reached goal!");
 	}
 }
 
@@ -129,84 +145,232 @@ function makeArray(w, h, val) {
     return arr;
 }
 
-function minQueue() {
-	this.data = [];
-	this.enqueue = function(v, score) {
-		this.data.push({"pos": v, "score": score});
-		console.log("enqueue: (" + v.x + ", " + v.y + ") with score " + score);
-	}
+function NodeHeap(initialNodes) {
+	this.data = initialNodes;
+	this.enqueue = function(node) {
+		this.data.push(node);
+	};
 	this.dequeue = function() {
 		if (this.data.length == 0) {
 			console.log("dequeue called on empty queue");
 		} else {
-			var lowestScore = Infinity;
-			var lowestKey = 0;
+			var lowestFScore = Infinity;
+			var lowestNode = null;
 			for (var i in this.data) {
-				if(this.data[i].score < lowestScore) {
-					lowestScore = this.data.score;
-					lowestKey = i;
+				if(this.data[i].fScore <= lowestFScore) {
+					lowestFScore = this.data[i].fScore;
+					lowestNode = this.data[i];
 				}
 			}
-			return this.data[lowestKey].pos
+			this.data.splice(this.data.indexOf(lowestNode), 1);
+			return lowestNode;
 		}
-	}
+	};
 	this.hasMember = function(v) {
 		for (var i in this.data) {
-			if(this.data[i].pos.x == v.x && this.data[i].pos.y == v.y) {
+			if(this.data[i].x == v.x && this.data[i].y == v.y) {
 				return true;
 			}
 		}
 		return false;
+	};
+}
+
+function NodeSet(nodeArray) {
+	this.data = nodeArray;
+	this.add = function(node) {
+		this.data.push(node);
+	};
+	this.hasMember = function(node) {
+		for (var i in this.data) {
+			if(this.data[i].pos.x == node.x && this.data[i].pos.y == node.y) {
+				return true;
+			}
+		}
+		return false;
+	};
+}
+
+function heuristicCostEstimate(startNode, goalNode) {
+	return 42;
+}
+
+// Node primitive
+function Node(x, y) {
+	this.x = x;
+	this.y = y;
+	// cost of getting from the start to the node
+	this.gScore = Infinity;
+	// the total cost of getting from the start node to the goal by passing this node
+	this.fScore = Infinity;
+	// to reconstruct the path eventually
+	this.cameFrom = null;
+	// neighbors [NeighborNode, NeighborDistance]
+
+	//  0 7 6
+	//  1   5
+	//  2 3 4 
+
+	this.neighbors = [];
+
+	this.toString = function() {
+		return "(" + x + ", " + y + ")";
 	}
 }
 
-function heuristicCostEstimate(start, goal) {
-	return 42;
+function reconstructPath(current) {
+	var totalPath = [current];
+	var cameFrom = current.cameFrom;
+	
+	while (cameFrom != null) {
+		current = cameFrom;
+		totalPath.push(cameFrom);
+		cameFrom = current.cameFrom;
+	}
+
+	// console.log(totalPath);
+
+	var steps = [];
+
+	for (var i = totalPath.length - 1; i > 0; i--) {
+		// console.log("We want to get from " + i + " to " + i-1);
+
+		steps.push(new Vec(totalPath[i - 1].x - totalPath[i].x, totalPath[i - 1].y - totalPath[i].y));
+	}
+
+	return steps;
+
+	// return [new Vec(1,1), new Vec(1,1), new Vec(1,1), new Vec(1,0), new Vec(1,0), new Vec(0,1), new Vec(0,1), new Vec(0,1), new Vec(0,1), new Vec(1,1)];
+}
+
+function heuristicCostEstimate(startNode, endNode) {
+	var dx = Math.abs(startNode.x - endNode.x)
+    var dy = Math.abs(startNode.y - endNode.y)
+    return 10 * (dx + dy) + (14 - 2 * 10) * Math.min(dx, dy);
+}
+
+function setupNodes() {
+	var nodeArray = [];
+
+	for (var x = 0; x < dimension.x; x++) {
+		var currentRow = [];
+		for (var y = 0; y < dimension.y; y++) {
+			var currentNode = new Node(x, y);
+			currentRow.push(currentNode);
+		}
+		nodeArray.push(currentRow);
+	}
+
+	for (var x = 0; x < dimension.x; x++) {
+		for (var y = 0; y < dimension.y; y++) {
+			if(isWithinBounds(new Vec(x-1, y)) && !isObstacle(new Vec(x-1, y))) {
+				nodeArray[x][y].neighbors.push([nodeArray[x-1][y], 10]);
+			}
+			if(isWithinBounds(new Vec(x+1, y)) && !isObstacle(new Vec(x+1, y))) {
+				nodeArray[x][y].neighbors.push([nodeArray[x+1][y], 10]);
+			}
+			if(isWithinBounds(new Vec(x, y-1)) && !isObstacle(new Vec(x, y-1))) {
+				nodeArray[x][y].neighbors.push([nodeArray[x][y-1], 10]);
+			}
+			if(isWithinBounds(new Vec(x, y+1)) && !isObstacle(new Vec(x, y+1))) {
+				nodeArray[x][y].neighbors.push([nodeArray[x][y+1], 10]);
+			}
+
+			if(isWithinBounds(new Vec(x-1, y-1)) && !isObstacle(new Vec(x-1, y-1))
+				&& !(isObstacle(new Vec(x-1, y)) && isObstacle(new Vec(x, y-1)))
+
+
+				) {
+				nodeArray[x][y].neighbors.push([nodeArray[x-1][y-1], 14]);
+			}
+			if(isWithinBounds(new Vec(x-1, y+1)) && !isObstacle(new Vec(x-1, y+1))
+ 				&& !(isObstacle(new Vec(x-1, y)) && isObstacle(new Vec(x, y+1)))
+
+
+				) {
+				nodeArray[x][y].neighbors.push([nodeArray[x-1][y+1], 14]);
+			}
+			if(isWithinBounds(new Vec(x+1, y-1)) && !isObstacle(new Vec(x+1, y-1))
+
+				&& !(isObstacle(new Vec(x+1, y)) && isObstacle(new Vec(x, y-1)))
+
+				) {
+				nodeArray[x][y].neighbors.push([nodeArray[x+1][y-1], 14]);
+			}
+			if(isWithinBounds(new Vec(x+1, y+1)) && !isObstacle(new Vec(x+1, y+1))
+
+				&& !(isObstacle(new Vec(x+1, y)) && isObstacle(new Vec(x, y+1)))
+
+				) {
+				nodeArray[x][y].neighbors.push([nodeArray[x+1][y+1], 14]);
+			}
+		}
+	}
+
+	return nodeArray;
 }
 
 // returns a list of steps necessary to move from start to goal most efficiently
 function findShortestPath(start, goal) {
-	// var closedSet = minQueue();
-	// var openSet = minQueue();
-	// openSet.enqueue(start, heuristicCostEstimate(start, goal));
-	// var cameFrom = makeArray(dimension.x, dimension.y, nil);
-	// var gScore = makeArray(dimension.x, dimension.y, Infinity);
-	// gScore[start.x][start.y] = 0;
-	// var fScore = makeArray(dimension.x, dimension.y, Infinity);
-	// fScore[start.x][start.y] = heuristicCostEstimate(start, goal);
-
-	// while (openSet.length > 0) {
-	// 	var current = openSet.dequeue();
-	// 	if (current == goal) {
-	// 		console.log("Path found, now need to reconstruct.");
-	// 	}
-	// 	closedSet.enqueue(current);
-
-	// 	var neighbors = findNeighbors(current);
-	// 	for i in neighbors {
-	// 		if closedSet.hasMember(neighbors[i]) {
-	// 			continue;
-	// 		}
-	// 		if !openSet.hasMember(neighbors[i]) {
-	// 			openSet.enqueue
-	// 		}
-
-	// 		var tentativeGScore = gScore[neighbors[i].x][neighbors[i].y] + distBetween(current, neighbors[i]);
-	// 		if (tentativeGScore >= gScore[neighbors[i].x][neighbors[i].y]) {
-	// 			continue;
-	// 		}
-
-	// 		gScore[neighbors[i].x][neighbors[i].y] = tentativeGScore;
+	var nodes = setupNodes();
+	var startNode = nodes[start.x][start.y];
+	var goalNode = nodes[goal.x][goal.y];
+	startNode.gScore = 0;
+	startNode.fScore = heuristicCostEstimate(startNode, goalNode);
+	var closedSet = new NodeHeap([]);
+	var openSet = new NodeHeap([startNode]);
 
 
-	// 	}
-	// }
-	return [new Vec(1,1), new Vec(1,1), new Vec(1,1), new Vec(1,0), new Vec(1,0), new Vec(0,1), new Vec(0,1), new Vec(0,1), new Vec(0,1), new Vec(1,1)];
+	while (openSet.data.length > 0) {
+		var currentNode = openSet.dequeue();
+		closedSet.enqueue(currentNode);
+		// console.log("Dequeued " + currentNode.toString());
+
+		if (currentNode == goalNode) {
+			// console.log("Path found, now need to reconstruct.");
+			return reconstructPath(goalNode);
+		}
+
+		for (i in currentNode.neighbors) {
+			var neighborNode = currentNode.neighbors[i][0];
+			var neighborDist = currentNode.neighbors[i][1];
+
+			if (closedSet.hasMember(neighborNode)) {
+				continue;
+			}
+			if (!openSet.hasMember(neighborNode)) {
+				openSet.enqueue(neighborNode);
+			}
+
+			var tentativeGScore = currentNode.gScore + neighborDist;
+			if (tentativeGScore >= neighborNode.gScore) {
+				continue;
+			}
+
+			neighborNode.cameFrom = currentNode;
+			neighborNode.gScore = tentativeGScore;
+			neighborNode.fScore = neighborNode.gScore + heuristicCostEstimate(neighborNode, goalNode);
+		}
+	}
 }
 
 draw();
+update();
+setInterval(update, 750);
 
-setInterval(update, 1000);
+function pixelToVec(x, y) {
+	return (new Vec(Math.floor(x / pixelSize), Math.floor(y / pixelSize)));
+}
+
+// listener, using W3C style for example    
+canvas.addEventListener('click', function(e) {
+    console.log('click: ' + e.offsetX + '/' + e.offsetY);
+    // console.log();
+    obstacles.push(pixelToVec(e.offsetX, e.offsetY));
+}, false);
+
+
+
 </script>
 </body>
 </html>
