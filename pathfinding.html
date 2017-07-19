@@ -19,8 +19,8 @@ function Vec(x,y) {
 }
 
 // Config
-var dimension = new Vec(16, 16);
-var pixelSize = 40;
+var dimension = new Vec(64, 64);
+var pixelSize = 10;
 
 var playerPos = new Vec(0, 0);
 var goal = new Vec(13, 15);
@@ -205,7 +205,7 @@ function Node(x, y) {
 	this.fScore = Infinity;
 	// to reconstruct the path eventually
 	this.cameFrom = null;
-	// neighbors [NeighborNode, NeighborDistance]
+	// neighbors, array of Node
 
 	//  0 7 6
 	//  1   5
@@ -218,6 +218,7 @@ function Node(x, y) {
 	}
 }
 
+// returns an array of Vec with individual steps to take to reach the goal
 function reconstructPath(current) {
 	var totalPath = [current];
 	var cameFrom = current.cameFrom;
@@ -239,8 +240,6 @@ function reconstructPath(current) {
 	}
 
 	return steps;
-
-	// return [new Vec(1,1), new Vec(1,1), new Vec(1,1), new Vec(1,0), new Vec(1,0), new Vec(0,1), new Vec(0,1), new Vec(0,1), new Vec(0,1), new Vec(1,1)];
 }
 
 function heuristicCostEstimate(startNode, endNode) {
@@ -264,16 +263,16 @@ function setupNodes() {
 	for (var x = 0; x < dimension.x; x++) {
 		for (var y = 0; y < dimension.y; y++) {
 			if(isWithinBounds(new Vec(x-1, y)) && !isObstacle(new Vec(x-1, y))) {
-				nodeArray[x][y].neighbors.push([nodeArray[x-1][y], 10]);
+				nodeArray[x][y].neighbors.push(nodeArray[x-1][y]);
 			}
 			if(isWithinBounds(new Vec(x+1, y)) && !isObstacle(new Vec(x+1, y))) {
-				nodeArray[x][y].neighbors.push([nodeArray[x+1][y], 10]);
+				nodeArray[x][y].neighbors.push(nodeArray[x+1][y]);
 			}
 			if(isWithinBounds(new Vec(x, y-1)) && !isObstacle(new Vec(x, y-1))) {
-				nodeArray[x][y].neighbors.push([nodeArray[x][y-1], 10]);
+				nodeArray[x][y].neighbors.push(nodeArray[x][y-1]);
 			}
 			if(isWithinBounds(new Vec(x, y+1)) && !isObstacle(new Vec(x, y+1))) {
-				nodeArray[x][y].neighbors.push([nodeArray[x][y+1], 10]);
+				nodeArray[x][y].neighbors.push(nodeArray[x][y+1]);
 			}
 
 			if(isWithinBounds(new Vec(x-1, y-1)) && !isObstacle(new Vec(x-1, y-1))
@@ -281,28 +280,28 @@ function setupNodes() {
 
 
 				) {
-				nodeArray[x][y].neighbors.push([nodeArray[x-1][y-1], 14]);
+				nodeArray[x][y].neighbors.push(nodeArray[x-1][y-1]);
 			}
 			if(isWithinBounds(new Vec(x-1, y+1)) && !isObstacle(new Vec(x-1, y+1))
  				&& !(isObstacle(new Vec(x-1, y)) && isObstacle(new Vec(x, y+1)))
 
 
 				) {
-				nodeArray[x][y].neighbors.push([nodeArray[x-1][y+1], 14]);
+				nodeArray[x][y].neighbors.push(nodeArray[x-1][y+1]);
 			}
 			if(isWithinBounds(new Vec(x+1, y-1)) && !isObstacle(new Vec(x+1, y-1))
 
 				&& !(isObstacle(new Vec(x+1, y)) && isObstacle(new Vec(x, y-1)))
 
 				) {
-				nodeArray[x][y].neighbors.push([nodeArray[x+1][y-1], 14]);
+				nodeArray[x][y].neighbors.push(nodeArray[x+1][y-1]);
 			}
 			if(isWithinBounds(new Vec(x+1, y+1)) && !isObstacle(new Vec(x+1, y+1))
 
 				&& !(isObstacle(new Vec(x+1, y)) && isObstacle(new Vec(x, y+1)))
 
 				) {
-				nodeArray[x][y].neighbors.push([nodeArray[x+1][y+1], 14]);
+				nodeArray[x][y].neighbors.push(nodeArray[x+1][y+1]);
 			}
 		}
 	}
@@ -332,8 +331,7 @@ function findShortestPath(start, goal) {
 		}
 
 		for (i in currentNode.neighbors) {
-			var neighborNode = currentNode.neighbors[i][0];
-			var neighborDist = currentNode.neighbors[i][1];
+			var neighborNode = currentNode.neighbors[i];
 
 			if (closedSet.hasMember(neighborNode)) {
 				continue;
@@ -342,7 +340,7 @@ function findShortestPath(start, goal) {
 				openSet.enqueue(neighborNode);
 			}
 
-			var tentativeGScore = currentNode.gScore + neighborDist;
+			var tentativeGScore = currentNode.gScore + heuristicCostEstimate(currentNode, neighborNode);
 			if (tentativeGScore >= neighborNode.gScore) {
 				continue;
 			}
@@ -362,11 +360,28 @@ function pixelToVec(x, y) {
 	return (new Vec(Math.floor(x / pixelSize), Math.floor(y / pixelSize)));
 }
 
-// listener, using W3C style for example    
-canvas.addEventListener('click', function(e) {
-    console.log('click: ' + e.offsetX + '/' + e.offsetY);
-    // console.log();
-    obstacles.push(pixelToVec(e.offsetX, e.offsetY));
+var mousedown = false;
+
+// // listener, using W3C style for example    
+// canvas.addEventListener('click', function(e) {
+//     console.log('click: ' + e.offsetX + '/' + e.offsetY);
+//     // console.log();
+//     obstacles.push(pixelToVec(e.offsetX, e.offsetY));
+// }, false);
+
+document.addEventListener("mousedown", function( e ) {
+	obstacles.push(pixelToVec(e.offsetX, e.offsetY));
+	mousedown = true;
+}, false);
+
+document.addEventListener("mouseup", function( e ) {
+	mousedown = false;
+}, false);
+/* events fired on the drop targets */
+document.addEventListener("mousemove", function( e ) {
+	if (mousedown) {
+	    obstacles.push(pixelToVec(e.offsetX, e.offsetY));
+	}
 }, false);
 
 
