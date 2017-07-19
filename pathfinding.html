@@ -5,9 +5,24 @@
 </head>
 <body>
 <canvas id="canvas" width="640" height="640" style="border: 1px solid black;"></canvas>
-https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script type="text/javascript">
+// Helper: colors
+var currentColor = 0;
+var maxColor = 32;
+var frequency = .3;
+function nextColor() {
+	currentColor = (currentColor + 1) % maxColor;
+
+	var red = Math.sin(frequency*currentColor + 0) * 127 + 128;
+	var green = Math.sin(frequency*currentColor + 2) * 127 + 128;
+	var blue  = Math.sin(frequency*currentColor + 4) * 127 + 128;
+
+	var color = "rgb(" + Math.floor(red) + ", " +  Math.floor(green) + ", " +  Math.floor(blue) + ")"
+
+	return color;
+}
+
 // mathematical helpers
 function Vec(x,y) {
 	this.x = x;
@@ -19,35 +34,103 @@ function Vec(x,y) {
 }
 
 // Config
-var dimension = new Vec(64, 64);
-var pixelSize = 10;
+var dimension = new Vec(32, 32);
+var pixelSize = 20;
 
 var playerPos = new Vec(0, 0);
-var goal = new Vec(13, 15);
+
+var agents = [];
+var numAgents = 14;
+for (var i = 0; i < numAgents; i++) {
+	var player = new Player(getRandomVec());
+	player.color = nextColor();
+	agents.push(player);
+}
+
+function startWandering() {
+	for (var i in agents) {
+		agents[i].wander = true;
+	}
+}
+
+function lineUp() {
+	for (var i in agents) {
+		agents[i].wander = false;
+		agents[i].goal = new Vec(1 + 2*i, 16);
+	}
+}
+
+startWandering();
+
+// returns a random unoccupied block
+function getRandomVec() {
+	do {
+		var x = getRandomInt(0, dimension.x - 1);
+		var y = getRandomInt(0, dimension.y - 1);
+		var res = new Vec(x, y);
+	} while (isOccupied(res));
+	return res;
+}
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 var obstacles = [];
-obstacles.push(new Vec(4,4));
-obstacles.push(new Vec(5,4));
-obstacles.push(new Vec(6,4));
-obstacles.push(new Vec(4,5));
-obstacles.push(new Vec(4,6));
-obstacles.push(new Vec(4,7));
-obstacles.push(new Vec(4,8));
-obstacles.push(new Vec(4,9));
-obstacles.push(new Vec(4,10));
-obstacles.push(new Vec(5,11));
+
+function Player(pos) {
+	this.pos = pos;
+	this.color = "yellow";
+	this.goal = pos;
+	this.path = [];
+	this.wander = false;
+	this.move = function(v) {
+		var potentialPos = new Vec(this.pos.x + v.x, this.pos.y + v.y);
+		if(isWithinBounds(potentialPos)) {
+			this.pos.add(v);
+		} else {
+			console.log("Tried to move player out of bounds.")
+		}
+	};
+	this.draw = function() {
+		drawElement(this.pos, this.color);
+	};
+	this.drawPath = function() {
+		var currentPos = Object.create(this.pos);
+		var futurePath = this.path.slice();
+		while (true) {
+			var nextMove = futurePath.shift();
+			if (nextMove != null) {
+				currentPos.add(nextMove);
+				drawElement(currentPos, "rgba(20,20,20,0.2)");
+			} else {
+				break;
+			}
+		}
+		drawElement(this.goal, "green");
+	};
+	this.update = function() {
+		this.path = findShortestPath(this.pos, this.goal);
+		if(this.pos.x == this.goal.x && this.pos.y == this.goal.y) {
+			if (this.wander) {
+				this.goal = getRandomVec();
+			}
+			return;
+		} 
+		if (typeof(this.path) !== 'undefined' && this.path.length > 0) {
+			var nextMove = this.path.shift();
+			this.move(nextMove);	
+		}
+	};
+}
+
+function addObstacle(pos) {
+	obstacles.push(pos)
+}
 
 // player methods
 function isWithinBounds(v) {
 	return v.x >= 0 && v.x < dimension.x && v.y >= 0 && v.y < dimension.y;
-}
-
-function movePlayer(v) {
-	var potentialPos = new Vec(playerPos.x + v.x, playerPos.y + v.y);
-	if(isWithinBounds(potentialPos)) {
-		playerPos.add(v);
-	} else {
-		console.log("Tried to move player out of bounds.")
-	}
 }
 
 // Main
@@ -75,13 +158,15 @@ function drawElement(pos, color) {
 	ctx.fillRect(pos.x * pixelSize, pos.y * pixelSize, pixelSize, pixelSize);
 }
 
-function drawPlayer() {
-	drawElement(playerPos, "red");
-}
-
-function isObstacle(v) {
+// returns false if an obstacle or another angent is in the way
+function isOccupied(v) {
 	for (i in obstacles) {
 		if(v.x == obstacles[i].x && v.y == obstacles[i].y) {
+			return true;
+		}
+	}
+	for (i in agents) {
+		if(v.x == agents[i].pos.x && v.y == agents[i].pos.y) {
 			return true;
 		}
 	}
@@ -90,47 +175,18 @@ function isObstacle(v) {
 
 function drawObstacles() {
 	for (i in obstacles) {
-		drawElement(obstacles[i], "blue");
+		drawElement(obstacles[i], "black");
 	}
 }
 
-function drawGoal() {
-	drawElement(goal, "green");
-}
-
-function drawPath() {
-	var currentPos = Object.create(playerPos);
-	var futurePath = path.slice();
-	while (true) {
-		var nextMove = futurePath.shift();
-		if (nextMove != null) {
-			currentPos.add(nextMove);
-			drawElement(currentPos, "rgba(20,20,20,0.2)");
-		} else {
-			break;
-		}
-	}	
-}
-
-var path;
-
-function draw() {
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	path = findShortestPath(playerPos, goal);
-	drawBoard();
-	drawObstacles();
-	drawGoal();
-	drawPlayer();
-	drawPath();
-}
-
 function update() {
-	draw();
-	var nextMove = path.shift();
-	if (nextMove != null) {
-		movePlayer(nextMove);
-	} else {
-		// console.log("reached goal!");
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	// drawBoard();
+	drawObstacles();
+	for (var i in agents) {
+		agents[i].update();
+		// agents[i].drawPath();
+		agents[i].draw();
 	}
 }
 
@@ -206,11 +262,6 @@ function Node(x, y) {
 	// to reconstruct the path eventually
 	this.cameFrom = null;
 	// neighbors, array of Node
-
-	//  0 7 6
-	//  1   5
-	//  2 3 4 
-
 	this.neighbors = [];
 
 	this.toString = function() {
@@ -228,14 +279,9 @@ function reconstructPath(current) {
 		totalPath.push(cameFrom);
 		cameFrom = current.cameFrom;
 	}
-
-	// console.log(totalPath);
-
 	var steps = [];
 
 	for (var i = totalPath.length - 1; i > 0; i--) {
-		// console.log("We want to get from " + i + " to " + i-1);
-
 		steps.push(new Vec(totalPath[i - 1].x - totalPath[i].x, totalPath[i - 1].y - totalPath[i].y));
 	}
 
@@ -262,45 +308,33 @@ function setupNodes() {
 
 	for (var x = 0; x < dimension.x; x++) {
 		for (var y = 0; y < dimension.y; y++) {
-			if(isWithinBounds(new Vec(x-1, y)) && !isObstacle(new Vec(x-1, y))) {
+			if(isWithinBounds(new Vec(x-1, y)) && !isOccupied(new Vec(x-1, y))) {
 				nodeArray[x][y].neighbors.push(nodeArray[x-1][y]);
 			}
-			if(isWithinBounds(new Vec(x+1, y)) && !isObstacle(new Vec(x+1, y))) {
+			if(isWithinBounds(new Vec(x+1, y)) && !isOccupied(new Vec(x+1, y))) {
 				nodeArray[x][y].neighbors.push(nodeArray[x+1][y]);
 			}
-			if(isWithinBounds(new Vec(x, y-1)) && !isObstacle(new Vec(x, y-1))) {
+			if(isWithinBounds(new Vec(x, y-1)) && !isOccupied(new Vec(x, y-1))) {
 				nodeArray[x][y].neighbors.push(nodeArray[x][y-1]);
 			}
-			if(isWithinBounds(new Vec(x, y+1)) && !isObstacle(new Vec(x, y+1))) {
+			if(isWithinBounds(new Vec(x, y+1)) && !isOccupied(new Vec(x, y+1))) {
 				nodeArray[x][y].neighbors.push(nodeArray[x][y+1]);
 			}
 
-			if(isWithinBounds(new Vec(x-1, y-1)) && !isObstacle(new Vec(x-1, y-1))
-				&& !(isObstacle(new Vec(x-1, y)) && isObstacle(new Vec(x, y-1)))
-
-
-				) {
+			if(isWithinBounds(new Vec(x-1, y-1)) && !isOccupied(new Vec(x-1, y-1))
+				&& !(isOccupied(new Vec(x-1, y)) && isOccupied(new Vec(x, y-1)))) {
 				nodeArray[x][y].neighbors.push(nodeArray[x-1][y-1]);
 			}
-			if(isWithinBounds(new Vec(x-1, y+1)) && !isObstacle(new Vec(x-1, y+1))
- 				&& !(isObstacle(new Vec(x-1, y)) && isObstacle(new Vec(x, y+1)))
-
-
-				) {
+			if(isWithinBounds(new Vec(x-1, y+1)) && !isOccupied(new Vec(x-1, y+1))
+ 			   && !(isOccupied(new Vec(x-1, y)) && isOccupied(new Vec(x, y+1)))) {
 				nodeArray[x][y].neighbors.push(nodeArray[x-1][y+1]);
 			}
-			if(isWithinBounds(new Vec(x+1, y-1)) && !isObstacle(new Vec(x+1, y-1))
-
-				&& !(isObstacle(new Vec(x+1, y)) && isObstacle(new Vec(x, y-1)))
-
-				) {
+			if(isWithinBounds(new Vec(x+1, y-1)) && !isOccupied(new Vec(x+1, y-1))
+			   && !(isOccupied(new Vec(x+1, y)) && isOccupied(new Vec(x, y-1)))) {
 				nodeArray[x][y].neighbors.push(nodeArray[x+1][y-1]);
 			}
-			if(isWithinBounds(new Vec(x+1, y+1)) && !isObstacle(new Vec(x+1, y+1))
-
-				&& !(isObstacle(new Vec(x+1, y)) && isObstacle(new Vec(x, y+1)))
-
-				) {
+			if(isWithinBounds(new Vec(x+1, y+1)) && !isOccupied(new Vec(x+1, y+1))
+			   && !(isOccupied(new Vec(x+1, y)) && isOccupied(new Vec(x, y+1)))) {
 				nodeArray[x][y].neighbors.push(nodeArray[x+1][y+1]);
 			}
 		}
@@ -352,22 +386,14 @@ function findShortestPath(start, goal) {
 	}
 }
 
-draw();
 update();
-setInterval(update, 750);
+setInterval(update, 200);
 
 function pixelToVec(x, y) {
 	return (new Vec(Math.floor(x / pixelSize), Math.floor(y / pixelSize)));
 }
 
 var mousedown = false;
-
-// // listener, using W3C style for example    
-// canvas.addEventListener('click', function(e) {
-//     console.log('click: ' + e.offsetX + '/' + e.offsetY);
-//     // console.log();
-//     obstacles.push(pixelToVec(e.offsetX, e.offsetY));
-// }, false);
 
 document.addEventListener("mousedown", function( e ) {
 	obstacles.push(pixelToVec(e.offsetX, e.offsetY));
