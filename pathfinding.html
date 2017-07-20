@@ -4,7 +4,11 @@
 	<title>Path finding</title>
 </head>
 <body>
-<canvas id="canvas" width="640" height="640" style="border: 1px solid black;"></canvas>
+<div style="position: fixed; top:100px; width: 100%; text-align: center;">
+	<canvas id="canvas" width="640" height="640" style="border: 1px solid black;"></canvas>
+	<div id="info"><p>Lorem ipsum dolor sit amet.</p></div>
+</div>
+<div style="height: 2000px;"></div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script type="text/javascript">
 // Helper: colors
@@ -440,9 +444,28 @@ document.addEventListener("mousemove", function( e ) {
 	    obstacles.push(pixelToVec(e.offsetX, e.offsetY));
 	}
 }, false);
+</script>
+<script>
+var fadeStart = 300; // 100px scroll or less will equiv to 1 opacity
+var fadeUntil = 400; // 200px scroll or more will equiv to 0 opacity
+var fading = $('#info');
 
-
-
+$(window).bind('scroll', function(){
+    var offset = $(document).scrollTop();
+    var opacity = 0;
+    if(offset <= fadeStart){
+    	fading.html("This is the first bit of text.");
+    	startWandering();
+        opacity = 1;
+    } else if(offset <= fadeUntil) {
+    	fading.html("And now another sentence.");
+    	lineUp();
+        opacity=1-offset/fadeUntil;
+    } else if(offset > fadeUntil) {
+    	fading.html("Split the pairs.");
+    	lineUpPairs();
+    }
+});
 </script>
 </body>
 </html>
