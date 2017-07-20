@@ -6,7 +6,7 @@
 <body>
 <div style="position: fixed; top:100px; width: 100%; text-align: center;">
 	<canvas id="canvas" width="640" height="640" style="border: 1px solid black;"></canvas>
-	<div id="info"><p>Lorem ipsum dolor sit amet.</p></div>
+	<div id="info" style="font-size: 1.6em;"><p></p></div>
 </div>
 <div style="height: 2000px;"></div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
@@ -447,22 +447,22 @@ document.addEventListener("mousemove", function( e ) {
 </script>
 <script>
 var fadeStart = 300; // 100px scroll or less will equiv to 1 opacity
-var fadeUntil = 400; // 200px scroll or more will equiv to 0 opacity
+var fadeUntil = 600; // 200px scroll or more will equiv to 0 opacity
 var fading = $('#info');
 
 $(window).bind('scroll', function(){
     var offset = $(document).scrollTop();
     var opacity = 0;
     if(offset <= fadeStart){
-    	fading.html("This is the first bit of text.");
+    	fading.html("At first all dots wander around aimlessly. Scroll down to see what happens...");
     	startWandering();
         opacity = 1;
     } else if(offset <= fadeUntil) {
-    	fading.html("And now another sentence.");
+    	fading.html("Now they line up... (scroll more)");
     	lineUp();
         opacity=1-offset/fadeUntil;
     } else if(offset > fadeUntil) {
-    	fading.html("Split the pairs.");
+    	fading.html("And they split into pairs!");
     	lineUpPairs();
     }
 });
