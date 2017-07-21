@@ -10,7 +10,7 @@ Consider
 
 Let's try to prove that what is on the left-hand side of the equation is equal to the right-hand side. We could try do do arithmetic, using algebra and equivalence operations to change both sides of the equation until we end up with the same on each side. That will work. It will show us that the two expressions are equivalent. It will also not help us understand anything. It is a mindless exercise. Isn't there away we can get an intuitive understanding of what is going on? Enter story proofs.
 
-Let's find a story to describe the expressions on both sides. Assume that there are 2n people in a dance. To dance, two people have to find each other and form a pair. Assuming that everybody can dance, how many different settings of pairs can we create?
+Let's find a story to describe the expressions on both sides. Assume that there are $2n$ people in a room. We want to group them into pairs. Since there are $2n$ people overall, there will we $n$ pairs. How many ways of forming these pairs exist? First we should find a method to determine a set of pairs.
 
 One way to do it, is to line up every one in a row. Then we say that the first two are a pair, and the second two are a pair and so on. How many such pairs exists?
 
