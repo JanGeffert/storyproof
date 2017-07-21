@@ -11,7 +11,7 @@
 <body style="margin:0; padding:0;">
 <div style="position: fixed; top:100px; width: 100%; text-align: center;">
 <!-- 	<div style="font-size: 1.6em;"><p>Understanding $$\frac{(2n)!}{n^2 \cdot n!} = (2n - 1) \cdot (2n -3) \cdot ... \cdot 1$$</p></div> -->
-	<canvas id="canvas" width="640" height="640" style="border: 0px solid #DDD;; background-color: white;">
+	<canvas id="canvas" width="640" height="640" style="border: 0px solid #DDD; background-color: white;">
 		</canvas>
 	<div id="info" style="font-size: 1.4em; width: 640px; margin-left: auto; margin-right:auto; margin-bottom: 40px; height: 200px; text-align: left; line-height: 1.4em; color: #222;"><p></p></div>
 </div>
@@ -232,6 +232,8 @@ function drawObstacles() {
 	}
 }
 
+var numbersThatHaveAppeared = 0;
+
 function update() {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 	// drawBoard();
@@ -240,6 +242,12 @@ function update() {
 		agents[i].update();
 		// agents[i].drawPath();
 		agents[i].draw();
+	}
+
+	ctx.font = "1.4em Times";
+	ctx.fillStyle = "#444";
+	for (var i = 0; i < numbersThatHaveAppeared; i++) {
+		ctx.fillText("#" + (i + 1), 3 * pixelSize + i * 6 * pixelSize, 21 * pixelSize);
 	}
 }
 
@@ -477,61 +485,71 @@ function layoutText() {
 	var offset = $(document).scrollTop();
     var opacity = 0;
     var page = Math.floor(offset/elementHeight);
+
+    if(page == 3) {
+    	numbersThatHaveAppeared = ((offset - page * elementHeight)/elementHeight) * agents.length / 2;
+    } else if(page < 3) {
+    	numbersThatHaveAppeared = 0;
+    }
+
     if(currentPage == page) {
     	return;
     } else {
     	currentPage = page;
     }
-    switch(page) {
-    	case 0:
-    		fading.html("We can find a story to describe the expression $$\\frac{(2n)!}{2^n \\cdot n!}$$In order to do that, let's suppose the following: There are <span style='font-weight: bold;'>$2n$ people</span> in a room. Each one is represented by a square (in the example above, $n = 5$). We want to group them into <span style='font-weight: bold;'>pairs</span>. Since there are $2n$ people overall, there will be $n$ pairs. How many ways of forming these pairs exist? (Scroll down to find out)");
-    		startWandering();
-    	  	clearInterval(swapSecondAndThirdPairIntervalID);
-    	  	clearInterval(swapSecondPairIntervalID);
-    		break;
+    fading.fadeOut( "slow", function() {
+	    switch(page) {
+	    	case 0:
+	    		fading.html("We can find a story to describe the expression $$\\frac{(2n)!}{2^n \\cdot n!}$$In order to do that, let's suppose the following: There are <span style='font-weight: bold;'>$2n$ people</span> in a room. Each one is represented by a square (in the example above, $n = 5$). We want to group them into <span style='font-weight: bold;'>pairs</span>. Since there are $2n$ people overall, there will be $n$ pairs. How many ways of forming these pairs exist? (Scroll down to find out)");
+	    		startWandering();
+	    	  	clearInterval(swapSecondAndThirdPairIntervalID);
+	    	  	clearInterval(swapSecondPairIntervalID);
+	    		break;
 
-    	case 1:
-    	    fading.html("A good idea when approaching this sort of problem is to define a method to determine one possible configuration of pairs. One way of doing that is to line up every one in a row. (Keep scrolling...)");
-    		lineUp();
-    	  	clearInterval(swapSecondAndThirdPairIntervalID);
-    	  	clearInterval(swapSecondPairIntervalID);
-    		break;
+	    	case 1:
+	    		fading.html("A good idea when approaching this sort of problem is to define a method to determine one possible configuration of pairs. One way of doing that is to line up every one in a row. (Keep scrolling...)");
+	    		lineUp();
+	    	  	clearInterval(swapSecondAndThirdPairIntervalID);
+	    	  	clearInterval(swapSecondPairIntervalID);
+	    		break;
 
-    	case 2:
-    	  	fading.html("We then subdivide the line, saying that the first two people are a pair, the second two people are a pair, and so on. We have found one possible way of assigning everyone to a pair! Now, the only thing left for us to do is to figure out in how many ways we can form the initial line, i.e. how many <span style='font-weight: bold;'>orderings of $2n$ people</span> there are.");
-    	  	clearInterval(swapSecondAndThirdPairIntervalID);
-    	  	clearInterval(swapSecondPairIntervalID);
-    		lineUpPairs();
-    	break;
+	    	case 2:
+	    	  	fading.html("We then subdivide the line, saying that the first two people are a pair, the second two people are a pair, and so on. We have found one possible way of assigning everyone to a pair! Now, the only thing left for us to do is to figure out in how many ways we can form the initial line, i.e. how many <span style='font-weight: bold;'>orderings of $2n$ people</span> there are.");
+	    	  	clearInterval(swapSecondAndThirdPairIntervalID);
+	    	  	clearInterval(swapSecondPairIntervalID);
+	    		lineUpPairs();
+	    	break;
 
-    	case 3:
-    	  	fading.html("Let's imagine determining each spot in the line after another. The first spot can be taken by <span style='font-weight: bold;'>$2n$ people</span>. After we have assigned the first one, there are $(2n-1)$ people left who could take the second one. For the third $(2n-2)$ people are in the pool of possible occupants. The last person to get a spot has no choice but to take the last one.<br /><br /><span style='font-weight: bold;'>$$2n \\cdot (2n-1) \\cdot (2n-2) \\cdot ... \\cdot 2 \\cdot 1$$</span> is such a common mathematical expression, that we have developed notation for it: <span style='font-weight: bold;'>$(2n)!$</span>");
-    	  	clearInterval(swapSecondAndThirdPairIntervalID);
-    	  	clearInterval(swapSecondPairIntervalID);
-    	  	lineUpPairs();
-    	break;
+	    	case 3:
+	    	  	fading.html("Let's imagine determining each spot in the line after another. The first spot can be taken by <span style='font-weight: bold;'>$2n$ people</span>. After we have assigned the first one, there are $(2n-1)$ people left who could take the second one. For the third $(2n-2)$ people are in the pool of possible occupants. The last person to get a spot has no choice but to take the last one.<br /><br /><span style='font-weight: bold;'>$$2n \\cdot (2n-1) \\cdot (2n-2) \\cdot ... \\cdot 2 \\cdot 1$$</span> is such a common mathematical expression, that we have developed notation for it: <span style='font-weight: bold;'>$(2n)!$</span>");
+	    	  	clearInterval(swapSecondAndThirdPairIntervalID);
+	    	  	clearInterval(swapSecondPairIntervalID);
+	    	  	lineUpPairs();
+	    	break;
 
-    	case 4:
-    	  	fading.html("We have the answer <span style='font-weight: bold;'>$$(2n)!$$</span>But not so fast. Our reasoning is flawed. We are <span style='font-weight: bold;'>overcounting</span> the number of pair configurations in two ways. First of all, we really don't care about who is first within a pair and who is second. To us, it is the very same pair. Therefore, we have overcounted by a factor of $2$ for each of the n pairs in the line. We can adjust the expression of $(2n)!$ by <span style='font-weight: bold;'>dividing by $2$ a total of n times</span>, or expressed more concisley <span style='font-weight: bold;'>$2^n$.</span>");
-    	  	clearInterval(swapSecondAndThirdPairIntervalID);
-    	  	swapSecondAndThirdPairIntervalID = null;
-    	  	lineUpPairs();
-    	  	if(swapSecondPairIntervalID == null) {
-    	   		swapSecondPairIntervalID = setInterval(swapSecondPair, 2000);
-    	    }
-    	break;
+	    	case 4:
+	    	  	fading.html("We have the answer <span style='font-weight: bold;'>$$(2n)!$$</span>But not so fast. Our reasoning is flawed. We are <span style='font-weight: bold;'>overcounting</span> the number of pair configurations in two ways. First of all, we really don't care about who is first within a pair and who is second. To us, it is the very same pair. Therefore, we have overcounted by a factor of $2$ for each of the n pairs in the line. We can adjust the expression of $(2n)!$ by <span style='font-weight: bold;'>dividing by $2$ a total of n times</span>, or expressed more concisley <span style='font-weight: bold;'>$2^n$.</span>");
+	    	  	clearInterval(swapSecondAndThirdPairIntervalID);
+	    	  	swapSecondAndThirdPairIntervalID = null;
+	    	  	lineUpPairs();
+	    	  	if(swapSecondPairIntervalID == null) {
+	    	   		swapSecondPairIntervalID = setInterval(swapSecondPair, 2000);
+	    	    }
+	    	break;
 
-    	case 5:
-    	  	fading.html("We also overcounted when it comes to the order of pairs. We really don't care whether a pair was the pair #2, or the pair #3. There are <span style='font-weight: bold;'>$n!$</span> different orderings of pairs (by the same logic that we applied to determine the number of ways to assign people to the whole line), so we have to divide by that factor leaving us with the final expression of $$\\frac{(2n)!}{2^n \\cdot n!}$$");
-    	  	clearInterval(swapSecondPairIntervalID);
-    	  	swapSecondPairIntervalID = null;
-    	  	lineUpPairs();
-    	  	if(swapSecondAndThirdPairIntervalID == null) {
-    	   		swapSecondAndThirdPairIntervalID = setInterval(swapSecondAndThirdPair, 3000);
-    	    }
-    	break;
-    }
-    MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+	    	case 5:
+	    	  	fading.html("We also overcounted when it comes to the order of pairs. We really don't care whether a pair was the pair #2, or the pair #3. There are <span style='font-weight: bold;'>$n!$</span> different orderings of pairs (by the same logic that we applied to determine the number of ways to assign people to the whole line), so we have to divide by that factor leaving us with the final expression of $$\\frac{(2n)!}{2^n \\cdot n!}$$");
+	    	  	clearInterval(swapSecondPairIntervalID);
+	    	  	swapSecondPairIntervalID = null;
+	    	  	lineUpPairs();
+	    	  	if(swapSecondAndThirdPairIntervalID == null) {
+	    	   		swapSecondAndThirdPairIntervalID = setInterval(swapSecondAndThirdPair, 3000);
+	    	    }
+	    	break;
+	    }
+	   	MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+	    fading.fadeIn("slow");
+	});
 }
 
 $(window).bind('scroll', function(){
