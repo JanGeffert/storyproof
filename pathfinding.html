@@ -514,6 +514,7 @@ function layoutText() {
     	case 4:
     	  	fading.html("We have the answer <span style='font-weight: bold;'>$$(2n)!$$</span>But not so fast. Our reasoning is flawed. We are <span style='font-weight: bold;'>overcounting</span> the number of pair configurations in two ways. First of all, we really don't care about who is first within a pair and who is second. To us, it is the very same pair. Therefore, we have overcounted by a factor of $2$ for each of the n pairs in the line. We can adjust the expression of $(2n)!$ by <span style='font-weight: bold;'>dividing by $2$ a total of n times</span>, or expressed more concisley <span style='font-weight: bold;'>$2^n$.</span>");
     	  	clearInterval(swapSecondAndThirdPairIntervalID);
+    	  	swapSecondAndThirdPairIntervalID = null;
     	  	lineUpPairs();
     	  	if(swapSecondPairIntervalID == null) {
     	   		swapSecondPairIntervalID = setInterval(swapSecondPair, 2000);
@@ -523,9 +524,10 @@ function layoutText() {
     	case 5:
     	  	fading.html("We also overcounted when it comes to the order of pairs. We really don't care whether a pair was the pair #2, or the pair #3. There are <span style='font-weight: bold;'>$n!$</span> different orderings of pairs (by the same logic that we applied to determine the number of ways to assign people to the whole line), so we have to divide by that factor leaving us with the final expression of $$\\frac{(2n)!}{2^n \\cdot n!}$$");
     	  	clearInterval(swapSecondPairIntervalID);
+    	  	swapSecondPairIntervalID = null;
     	  	lineUpPairs();
     	  	if(swapSecondAndThirdPairIntervalID == null) {
-    	   		swapSecondAndThirdPairIntervalID = setInterval(swapSecondAndThirdPair, 2000);
+    	   		swapSecondAndThirdPairIntervalID = setInterval(swapSecondAndThirdPair, 3000);
     	    }
     	break;
     }
